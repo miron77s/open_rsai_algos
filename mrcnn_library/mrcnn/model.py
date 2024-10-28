@@ -8,7 +8,10 @@ Written by Waleed Abdulla
 """
 
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import random
+import warnings
+warnings.filterwarnings('ignore')
 import datetime
 import re
 import math
@@ -17,19 +20,22 @@ from collections import OrderedDict
 import multiprocessing
 import numpy as np
 import tensorflow as tf
-import keras
-import keras.backend as K
-import keras.layers as KL
-import keras.engine as KE
-import keras.models as KM
+# tf.config.set_visible_devices([], 'GPU') # RUN ON CPU
+import tensorflow.keras as keras
+import tensorflow.keras.backend as K
+import tensorflow.keras.layers as KL
+import tensorflow.keras.layers as KE
+import tensorflow.keras.utils as KU
+from tensorflow.python.eager import context
+import tensorflow.keras.models as KM
 
 from mrcnn import utils
 
-# Requires TensorFlow 1.3+ and Keras 2.0.8+.
+# Requires TensorFlow 2.0+
 from distutils.version import LooseVersion
-assert LooseVersion(tf.__version__) >= LooseVersion("1.3")
-assert LooseVersion(keras.__version__) >= LooseVersion('2.0.8')
+assert LooseVersion(tf.__version__) >= LooseVersion("2.0")
 
+tf.compat.v1.disable_eager_execution()
 
 ############################################################
 #  Utility Functions
@@ -273,6 +279,13 @@ class ProposalLayer(KE.Layer):
         self.proposal_count = proposal_count
         self.nms_threshold = nms_threshold
 
+    def get_config(self):
+        config = super(ProposalLayer, self).get_config()
+        config["config"] = self.config.to_dict()
+        config["proposal_count"] = self.proposal_count
+        config["nms_threshold"] = self.nms_threshold
+        return config
+    
     def call(self, inputs):
         # Box Scores. Use the foreground class confidence. [Batch, num_rois, 1]
         scores = inputs[0][:, :, 1]
@@ -284,7 +297,7 @@ class ProposalLayer(KE.Layer):
 
         # Improve performance by trimming to top anchors by score
         # and doing the rest on the smaller subset.
-        pre_nms_limit = tf.minimum(self.config.PRE_NMS_LIMIT, tf.shape(anchors)[1])
+        pre_nms_limit = tf.minimum(self.config.PRE_NMS_LIMIT, tf.shape(input=anchors)[1])
         ix = tf.nn.top_k(scores, pre_nms_limit, sorted=True,
                          name="top_anchors").indices
         scores = utils.batch_slice([scores, ix], lambda x, y: tf.gather(x, y),
@@ -321,11 +334,16 @@ class ProposalLayer(KE.Layer):
                 self.nms_threshold, name="rpn_non_max_suppression")
             proposals = tf.gather(boxes, indices)
             # Pad if needed
-            padding = tf.maximum(self.proposal_count - tf.shape(proposals)[0], 0)
-            proposals = tf.pad(proposals, [(0, padding), (0, 0)])
+            padding = tf.maximum(self.proposal_count - tf.shape(input=proposals)[0], 0)
+            proposals = tf.pad(tensor=proposals, paddings=[(0, padding), (0, 0)])
             return proposals
         proposals = utils.batch_slice([boxes, scores], nms,
                                       self.config.IMAGES_PER_GPU)
+        
+        if not context.executing_eagerly():
+            # Infer the static output shape:
+            out_shape = self.compute_output_shape(None)
+            proposals.set_shape(out_shape)
         return proposals
 
     def compute_output_shape(self, input_shape):
@@ -948,7 +966,12 @@ def fpn_classifier_graph(rois, feature_maps, image_meta,
                            name='mrcnn_bbox_fc')(shared)
     # Reshape to [batch, num_rois, NUM_CLASSES, (dy, dx, log(dh), log(dw))]
     s = K.int_shape(x)
-    mrcnn_bbox = KL.Reshape((s[1], num_classes, 4), name="mrcnn_bbox")(x)
+    # mrcnn_bbox = KL.Reshape((s[1], num_classes, 4), name="mrcnn_bbox")(x)
+
+    if s[1]==None:
+        mrcnn_bbox = KL.Reshape((-1, num_classes, 4), name="mrcnn_bbox")(x)
+    else:
+        mrcnn_bbox = KL.Reshape((s[1], num_classes, 4), name="mrcnn_bbox")(x)
 
     return mrcnn_class_logits, mrcnn_probs, mrcnn_bbox
 
@@ -1249,14 +1272,14 @@ def load_image_gt(dataset, config, image_id, augment=False, augmentation=None,
         # Make augmenters deterministic to apply similarly to images and masks
         det = augmentation.to_deterministic()
         image = det.augment_image(image)
-        # Change mask to np.uint8 because imgaug doesn't support np.bool
+        # Change mask to np.uint8 because imgaug doesn't support bool
         mask = det.augment_image(mask.astype(np.uint8),
                                  hooks=imgaug.HooksImages(activator=hook))
         # Verify that shapes didn't change
         assert image.shape == image_shape, "Augmentation shouldn't change image size"
         assert mask.shape == mask_shape, "Augmentation shouldn't change mask size"
         # Change mask back to bool
-        mask = mask.astype(np.bool)
+        mask = mask.astype(bool)
 
     # Note that some boxes might be all zeros if the corresponding mask got cropped out.
     # and here is to filter them out
@@ -1816,7 +1839,22 @@ def data_generator(dataset, config, shuffle=True, augment=False, augmentation=No
 ############################################################
 #  MaskRCNN Class
 ############################################################
-   
+
+def sigmoid(x):
+  return 1 / (1 + math.exp(-x))
+
+class AnchorsLayer(KL.Layer):
+    def __init__(self, anchors, name="anchors", **kwargs):
+        super(AnchorsLayer, self).__init__(name=name, **kwargs)
+        self.anchors = tf.Variable(anchors)
+
+    def call(self, dummy):
+        return self.anchors
+
+    def get_config(self):
+        config = super(AnchorsLayer, self).get_config()
+        return config
+
 class MaskRCNN():
     """Encapsulates the Mask RCNN model functionality.
 
@@ -1872,8 +1910,9 @@ class MaskRCNN():
             input_gt_boxes = KL.Input(
                 shape=[None, 4], name="input_gt_boxes", dtype=tf.float32)
             # Normalize coordinates
-            gt_boxes = KL.Lambda(lambda x: norm_boxes_graph(
-                x, K.shape(input_image)[1:3]))(input_gt_boxes)
+            # gt_boxes = KL.Lambda(lambda x: norm_boxes_graph(
+            #     x, K.shape(input_image)[1:3]))(input_gt_boxes)
+            gt_boxes = KL.Lambda(lambda x: norm_boxes_graph2(x))([input_gt_boxes,input_image])
             # 3. GT Masks (zero padded)
             # [batch, height, width, MAX_GT_INSTANCES]
             if config.USE_MINI_MASK:
@@ -1931,7 +1970,20 @@ class MaskRCNN():
             # TODO: can this be optimized to avoid duplicating the anchors?
             anchors = np.broadcast_to(anchors, (config.BATCH_SIZE,) + anchors.shape)
             # A hack to get around Keras's bad support for constants
-            anchors = KL.Lambda(lambda x: tf.Variable(anchors), name="anchors")(input_image)
+            ###############################
+            anchors = AnchorsLayer(anchors, name="anchors")(input_image)
+            ###############################
+            # class ConstLayer(tf.keras.layers.Layer):
+            #     def __init__(self, x, name=None):
+            #         super(ConstLayer, self).__init__(name=name)
+            #         self.x = tf.Variable(x)
+
+            #     def call(self, input):
+            #         return self.x
+
+            # anchors = ConstLayer(anchors, name="anchors")(input_image)
+            ###############################
+            # anchors = KL.Lambda(lambda x: tf.Variable(anchors), name="anchors")(input_image)
         else:
             anchors = input_anchors
 
@@ -2102,7 +2154,8 @@ class MaskRCNN():
         # Conditional import to support versions of Keras before 2.2
         # TODO: remove in about 6 months (end of 2018)
         try:
-            from keras.engine import saving
+            # from keras.engine import saving
+            from tensorflow.python.keras.saving import hdf5_format
         except ImportError:
             # Keras before 2.2 used the 'topology' namespace.
             from keras.engine import topology as saving
@@ -2127,9 +2180,12 @@ class MaskRCNN():
             layers = filter(lambda l: l.name not in exclude, layers)
 
         if by_name:
-            saving.load_weights_from_hdf5_group_by_name(f, layers)
+            # saving.load_weights_from_hdf5_group_by_name(f, layers)
+            # keras_model.load_weights(filepath, by_name=by_name)
+            hdf5_format.load_weights_from_hdf5_group_by_name(f, layers)
         else:
-            saving.load_weights_from_hdf5_group(f, layers)
+            # saving.load_weights_from_hdf5_group(f, layers)
+            hdf5_format.load_weights_from_hdf5_group(f, layers)
         if hasattr(f, 'close'):
             f.close()
 
@@ -2154,35 +2210,29 @@ class MaskRCNN():
         """Gets the model ready for training. Adds losses, regularization, and
         metrics. Then calls the Keras compile() function.
         """
-        self.keras_model.metrics_tensors = []
         # Optimizer object
         optimizer = keras.optimizers.SGD(
-            lr=learning_rate, momentum=momentum,
+            learning_rate=learning_rate, momentum=momentum,
             clipnorm=self.config.GRADIENT_CLIP_NORM)
         # Add Losses
-        # First, clear previously set losses to avoid duplication
-        self.keras_model._losses = []
-        self.keras_model._per_input_losses = {}
         loss_names = [
             "rpn_class_loss",  "rpn_bbox_loss",
             "mrcnn_class_loss", "mrcnn_bbox_loss", "mrcnn_mask_loss"]
+        # existing_layer_names = []
+        # for name in loss_names:
+        #     layer = self.keras_model.get_layer(name)
+        #     if layer is None or name in existing_layer_names:
+        #         continue
+        #     existing_layer_names.append(name)
+        #     loss = (tf.reduce_mean(layer.output, keepdims=True)
+        #            * self.config.LOSS_WEIGHTS.get(name, 1.))
+        #     self.keras_model.add_loss(loss)
+
         for name in loss_names:
             layer = self.keras_model.get_layer(name)
-            # print("AAAAAAAAA ", layer.output in self.keras_model.losses)
-            # print("AAAAAAAAAA ", tf.constant(layer.output in self.keras_model.losses))
-            # print(str(self.keras_model.losses))
-            # print(str(layer.output))
-            # print("AAAAAAAAAAAA ", str(layer.output) in str(self.keras_model.losses))
-            loss = tf.reduce_mean(layer.output, keepdims=True) * self.config.LOSS_WEIGHTS.get(name, 1.)
+            loss = (tf.reduce_mean(layer.output, keepdims=True)* self.config.LOSS_WEIGHTS.get(name, 1.))
             self.keras_model.add_loss(loss)
-            # tf.cond(tf.constant(layer.output in self.keras_model.losses), lambda: 1, lambda: self.keras_model.add_loss(tf.reduce_mean(layer.output, keepdims=True) * self.config.LOSS_WEIGHTS.get(name, 1.)))
-            # tf.cond(tf.constant(layer.output in self.keras_model.losses), lambda: 1, lambda: self.keras_model.add_loss(tf.reduce_mean(layer.output, keepdims=True) * self.config.LOSS_WEIGHTS.get(name, 1.)))
-            #if layer.output in self.keras_model.losses:
-            #    continue
-            #loss = (
-            #    tf.reduce_mean(layer.output, keepdims=True)
-            #    * self.config.LOSS_WEIGHTS.get(name, 1.))
-            # self.keras_model.add_loss(loss)
+
 
         # Add L2 Regularization
         # Skip gamma and beta weights of batch normalization layers.
@@ -2206,7 +2256,8 @@ class MaskRCNN():
             loss = (
                 tf.reduce_mean(layer.output, keepdims=True)
                 * self.config.LOSS_WEIGHTS.get(name, 1.))
-            self.keras_model.metrics_tensors.append(loss)
+            # self.keras_model.metrics_tensors.append(loss)
+            self.keras_model.add_metric(loss, name=name, aggregation='mean')
 
     def set_trainable(self, layer_regex, keras_model=None, indent=0, verbose=1):
         """Sets model layers as trainable if their names match
@@ -2276,7 +2327,11 @@ class MaskRCNN():
         # Directory for training logs
 #        self.log_dir = os.path.join(self.model_dir, "{}{:%Y%m%dT%H%M}".format(
 #            self.config.NAME.lower(), now))
-        self.log_dir = "//logdir//train"
+        # self.log_dir = "E:/cnn/geo/logdir/train"
+
+        # Directory for training logs
+        self.log_dir = os.path.join(self.model_dir, "{}{:%Y%m%dT%H%M}".format(
+            self.config.NAME.lower(), now))
 
         # Path to save after each epoch. Include placeholders that get filled by Keras.
         self.checkpoint_path = os.path.join(self.log_dir, "mask_rcnn_{}_*epoch*.h5".format(
@@ -2284,8 +2339,17 @@ class MaskRCNN():
         self.checkpoint_path = self.checkpoint_path.replace(
             "*epoch*", "{epoch:04d}")
 
-    def train(self, train_dataset, val_dataset, learning_rate, epochs, layers,
-              augmentation=None, custom_callbacks=None, no_augmentation_sources=None):
+    def train(
+        self, 
+        train_dataset, 
+        val_dataset, 
+        learning_rate, 
+        epochs, 
+        layers,
+        augmentation=None, 
+        custom_callbacks=None, 
+        no_augmentation_sources=None
+    ):
         """Train the model.
         train_dataset, val_dataset: Training and validation Dataset objects.
         learning_rate: The learning rate to train with
@@ -2335,12 +2399,20 @@ class MaskRCNN():
             layers = layer_regex[layers]
 
         # Data generators
-        train_generator = data_generator(train_dataset, self.config, shuffle=True,
-                                         augmentation=augmentation,
-                                         batch_size=self.config.BATCH_SIZE,
-                                         no_augmentation_sources=no_augmentation_sources)
-        val_generator = data_generator(val_dataset, self.config, shuffle=True,
-                                       batch_size=self.config.BATCH_SIZE)
+        train_generator = data_generator(
+            train_dataset, 
+            self.config, 
+            shuffle=True,
+            augmentation=augmentation,
+            batch_size=self.config.BATCH_SIZE,
+            no_augmentation_sources=no_augmentation_sources
+        )
+        val_generator = data_generator(
+            val_dataset, 
+            self.config, 
+            shuffle=True,
+            batch_size=self.config.BATCH_SIZE
+        )
 
         # Create log_dir if it does not exist
         if not os.path.exists(self.log_dir):
@@ -2348,10 +2420,18 @@ class MaskRCNN():
 
         # Callbacks
         callbacks = [
-            keras.callbacks.TensorBoard(log_dir=self.log_dir,
-                                        histogram_freq=0, write_graph=True, write_images=True),
-            keras.callbacks.ModelCheckpoint(self.checkpoint_path,
-                                            verbose=0, save_weights_only=True),
+            keras.callbacks.TensorBoard(
+                log_dir=self.log_dir,
+                histogram_freq=0, 
+                write_graph=True, 
+                write_images=True
+            ),
+            # tf.keras.callbacks.TensorBoard(log_dir=self.log_dir, histogram_freq=2),
+            keras.callbacks.ModelCheckpoint(
+                self.checkpoint_path, 
+                verbose=0, 
+                save_weights_only=True
+            ),
         ]
 
         # Add custom callbacks to the list
@@ -2367,12 +2447,12 @@ class MaskRCNN():
         # Work-around for Windows: Keras fails on Windows when using
         # multiprocessing workers. See discussion here:
         # https://github.com/matterport/Mask_RCNN/issues/13#issuecomment-353124009
-        if os.name is 'nt':
+        if os.name == 'nt':
             workers = 0
         else:
             workers = multiprocessing.cpu_count()
 
-        self.keras_model.fit_generator(
+        self.keras_model.fit(
             train_generator,
             initial_epoch=self.epoch,
             epochs=epochs,
@@ -2382,7 +2462,7 @@ class MaskRCNN():
             validation_steps=self.config.VALIDATION_STEPS,
             max_queue_size=100,
             workers=workers,
-            use_multiprocessing=True,
+            use_multiprocessing=False,
         )
         self.epoch = max(self.epoch, epochs)
 
@@ -2867,6 +2947,10 @@ def norm_boxes_graph(boxes, shape):
     shift = tf.constant([0., 0., 1., 1.])
     return tf.divide(boxes - shift, scale)
 
+def norm_boxes_graph2(x):
+    boxes,tensor_for_shape = x
+    shape = tf.shape(tensor_for_shape)[1:3]
+    return norm_boxes_graph(boxes,shape)
 
 def denorm_boxes_graph(boxes, shape):
     """Converts boxes from normalized coordinates to pixel coordinates.
