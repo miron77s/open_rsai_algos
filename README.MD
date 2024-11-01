@@ -61,7 +61,7 @@ conda install h5py
 Navigate to the `mrcnn_library` repository's directory and run `setup.py` script:
 
 ```
-mrcnn_library
+cd mrcnn_library
 python setup.py install
 ```
 
