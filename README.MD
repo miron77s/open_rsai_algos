@@ -11,6 +11,62 @@ git submodule update --init --recursive
 
 However if the standalone hydro+greenery detector is required simply clone this repository and follow the installation guide.
 
+## Installation
+
+Follow these steps to set up the environment and install OpenRSAI-Algos on your machine.
+
+### Prerequisites
+
+- Make sure you have [Anaconda](https://www.anaconda.com/products/individual) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installed on your system to manage your environments and packages.
+
+### Setting up the environment
+
+1. Open your terminal or Anaconda Prompt.
+2. Create a new Conda environment with the necessary dependencies by running the following command:
+
+```
+conda create -n open_rsai_detectors python=3.9.0 gdal=3.6.2 numpy==1.19.5
+```
+
+3. Activate the newly created environment:
+
+```
+conda activate open_rsai_detectors
+```
+
+### Installing TensorFlow and other dependencies
+
+1. Within the active environment, install TensorFlow 2.5.0:
+
+```
+pip install tensorflow==2.5.0 --ignore-installed
+```
+
+The `--ignore-installed` flag ensures that the specified version of TensorFlow is installed even if an existing version is present.
+
+2. Install additional dependencies:
+
+```
+pip install scipy==1.6.0 scikit-image==0.16.2 ipython==7.34.0 opencv-python pycocotools numpy==1.19.5
+```
+
+3. Install `h5py`, which is a requirement for handling HDF5 weights files:
+
+```
+conda install h5py
+```
+
+### Installing a customized Mask-RCNN
+
+Navigate to the `mrcnn_library` repository's directory and run `setup.py` script:
+
+```
+mrcnn_library
+python setup.py install
+```
+
+After completing these steps, OpenRSAI-Algos should be installed and ready to use in your `open_rsai_detectors` Conda environment.
+
 ## Training and testing hydrography and greenery detectors
 
 ### Train hydro
