@@ -1,5 +1,9 @@
 # Open Remote Sensing AI Library Algorithms (OpenRSAI-Algos)
 
+## Description
+
+The OpenRSAI-Algos provide greenery and hydro detection on satelite imagery.
+
 ## Requirements
 
 Building detection and reconstruction algorithms are implemented in [Open Remote Sensing AI Library Core](https://github.com/miron77s/open_rsai). To install all instrument pipelines follow the  [requirements](https://github.com/miron77s/open_rsai#requirements) and pull all it's submodules:
