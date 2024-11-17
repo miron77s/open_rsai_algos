@@ -15,6 +15,15 @@ git submodule update --init --recursive
 
 However if the standalone hydro+greenery detector is required simply clone this repository and follow the installation guide.
 
+### Hardware
+
+OpenRSAI-Algos utilities require the following hardware:
+
+ - 16 Gb RAM.
+ - NVIDIA GeForce 4070 (minimum 12Gb GPU memory).
+
+ For both training and inference it is recommended to use NVIDIA GeForce 4090.
+
 ## Installation
 
 Follow these steps to set up the environment and install OpenRSAI-Algos on your machine.
