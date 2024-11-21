@@ -51,12 +51,13 @@ conda create -n open_rsai_detectors python=3.9.0 gdal=3.6.2 numpy==1.19.5
 conda activate open_rsai_detectors
 ```
 
-### Installing TensorFlow and other dependencies
+### Installing CUDA and TensorFlow and other dependencies
 
-1. Within the active environment, install TensorFlow 2.5.0:
+1. Within the active environment, install CUDA 11.0 and TensorFlow 2.5.0:
 
 ```
 pip install tensorflow==2.5.0 --ignore-installed
+conda install -c conda-forge cudatoolkit=11.0
 ```
 
 The `--ignore-installed` flag ensures that the specified version of TensorFlow is installed even if an existing version is present.
@@ -64,7 +65,7 @@ The `--ignore-installed` flag ensures that the specified version of TensorFlow i
 2. Install additional dependencies:
 
 ```
-pip install scipy==1.6.0 scikit-image==0.16.2 ipython==7.34.0 opencv-python pycocotools numpy==1.19.5
+pip install scipy==1.6.0 scikit-image ipython==7.34.0 opencv-python pycocotools numpy==1.19.5
 ```
 
 3. Install `h5py`, which is a requirement for handling HDF5 weights files:
