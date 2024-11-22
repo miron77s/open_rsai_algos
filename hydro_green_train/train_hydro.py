@@ -47,7 +47,7 @@ class CocoConfig(Config):
     to the COCO dataset.
     """
     # Give the configuration a recognizable name
-    NAME = "coco"
+    NAME = "hydro"
 
     # We use a GPU with 12GB memory, which can fit two images.
     # Adjust down if you use a smaller GPU.

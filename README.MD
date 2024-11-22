@@ -65,7 +65,7 @@ The `--ignore-installed` flag ensures that the specified version of TensorFlow i
 2. Install additional dependencies:
 
 ```
-pip install scipy==1.6.0 scikit-image ipython==7.34.0 opencv-python pycocotools numpy==1.19.5
+pip install scipy==1.6.0 scikit-image==0.18.0 ipython==7.34.0 opencv-python pycocotools numpy==1.19.5
 ```
 
 3. Install `h5py`, which is a requirement for handling HDF5 weights files:
