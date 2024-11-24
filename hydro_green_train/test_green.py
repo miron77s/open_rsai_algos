@@ -450,7 +450,7 @@ def run(config, dataset_dir, target_dir, test_img_list, epoch_list, save_result)
     # image_ids = dataset.load_coco(DEFAULT_DATASET_DIR, val_type, year="2014")
     # dataset.prepare()
  
-    weights_dir = target_dir + "mask_rcnn_coco_*epoch*.h5"
+    weights_dir = target_dir + "mask_rcnn_green_*epoch*.h5"
 
     ap_data = {}
     bing_ap_data = {}
