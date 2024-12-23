@@ -4,11 +4,15 @@
 
 The OpenRSAI-Algos provide greenery and hydro detection on satelite imagery.
 
+## Tutorial
+
+The OpenRSAI-Algos is the [Open Remote Sensing AI Library Core](https://github.com/miron77s/open_rsai) library extension that can be installed and tested in complex according the [tutorial](https://github.com/miron77s/open_rsai/blob/main/tutorial/TUTORIAL.md). 
+
 ## Requirements
 
 All instructions below are tailored for Ubuntu 22.04 users. If you are using a different operating system, please adjust the commands accordingly.
 
-Building detection and reconstruction algorithms are implemented in [Open Remote Sensing AI Library Core](https://github.com/miron77s/open_rsai). To install all instrument pipelines follow the  [requirements](https://github.com/miron77s/open_rsai#requirements) and pull all it's submodules:
+Building detection and reconstruction algorithms are implemented in [OpenRSAI-Core](https://github.com/miron77s/open_rsai). To install all instrument pipelines follow the  [requirements](https://github.com/miron77s/open_rsai#requirements) and pull all it's submodules:
 
 
 ```
