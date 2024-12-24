@@ -40,6 +40,8 @@ Follow these steps to set up the environment and install OpenRSAI-Algos on your 
 
 - Make sure you have [Anaconda](https://www.anaconda.com/products/individual) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installed on your system to manage your environments and packages.
 
+Conda environment is required to provide the OpenRSAI-Algos the specific versions of Python, GDAL, numpy, TensorFlow and etc and prevent conflicts with the system environment.
+
 ### Setting up the environment
 
 1. Open your terminal or Anaconda Prompt.
