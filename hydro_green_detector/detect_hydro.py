@@ -105,7 +105,7 @@ def main(output_path, weights_file, work_region_shp, path_to_raster):
     sr.ExportToProj4()
 
     sr = osr.SpatialReference()
-    sr.ImportFromEPSG(3857)
+    sr.ImportFromEPSG(3395)
     sr.ExportToWkt()
 
     print('RasterXSize', ds.RasterXSize)
@@ -123,7 +123,7 @@ def main(output_path, weights_file, work_region_shp, path_to_raster):
     data_source = driver.CreateDataSource(output_path)
     # create the spatial reference system, WGS84
     srs =  osr.SpatialReference()
-    srs.ImportFromEPSG(3857)
+    srs.ImportFromEPSG(3395)
     # create one layer 
     layer = data_source.CreateLayer("green", srs, ogr.wkbPolygon)
     # Add an ID field
