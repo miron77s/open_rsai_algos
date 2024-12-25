@@ -125,7 +125,7 @@ def main(output_path, weights_file, work_region_shp, path_to_raster):
     srs =  osr.SpatialReference()
     srs.ImportFromEPSG(3395)
     # create one layer 
-    layer = data_source.CreateLayer("green", srs, ogr.wkbPolygon)
+    layer = data_source.CreateLayer("hydro", srs, ogr.wkbPolygon)
     # Add an ID field
     idField = ogr.FieldDefn("id", ogr.OFTInteger)
     layer.CreateField(idField)
