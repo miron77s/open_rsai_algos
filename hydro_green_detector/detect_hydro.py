@@ -119,8 +119,26 @@ def main(output_path, weights_file, work_region_shp, path_to_raster):
 
     # Set up the shapefile driver 
     driver = ogr.GetDriverByName("ESRI Shapefile")
-    # create the data source
-    data_source = driver.CreateDataSource(output_path)
+
+    # Open the data source in update mode if it exists, otherwise create a new data source
+    if os.path.exists(os.path.join(output_path, "hydro.shp")):
+        data_source = driver.Open(output_path, 1) # 1 is for update mode
+        # Assuming data_source is already open in update mode
+        layer_count = data_source.GetLayerCount()
+        hydro_index = -1
+        for i in range(layer_count):
+            layer = data_source.GetLayerByIndex(i)
+            if layer.GetName() == "hydro":
+                hydro_index = i
+                break
+
+        # Delete the "hydro" layer using its index, if it was found
+        if hydro_index != -1:
+            data_source.DeleteLayer(hydro_index)
+    else:
+        # Create a new data source since it doesn't exist
+        data_source = driver.CreateDataSource(output_path)
+
     # create the spatial reference system, WGS84
     srs =  osr.SpatialReference()
     srs.ImportFromEPSG(3395)
