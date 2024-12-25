@@ -166,18 +166,23 @@ def main(output_path, weights_file, work_region_shp, path_to_raster):
         print('set work region')
         work_region_file = ogr.Open(work_region_shp)
         work_region_shape = work_region_file.GetLayer(0)
-        #first feature of the shapefile
-        work_region_feature = work_region_shape.GetFeature(0)
-        work_region_jsonString = work_region_feature.ExportToJson()
-        print(work_region_jsonString) # (GeoJSON format)
-        work_region_info = json.loads(work_region_jsonString)
-        print(work_region_info['geometry']['coordinates'])
-        work_region = work_region_info['geometry']['coordinates']
 
-        work_region_x1 = work_region[0][0][0]
-        work_region_y1 = work_region[0][0][1]
-        work_region_x2 = work_region[0][1][0]
-        work_region_y2 = work_region[0][2][1]
+        # Get the first feature of the shapefile
+        work_region_feature = work_region_shape.GetFeature(0)
+
+        # Use GetEnvelope to get the bounding box of the feature
+        envelope = work_region_feature.GetGeometryRef().GetEnvelope()
+
+        # Envelope returns a tuple (minX, maxX, minY, maxY)
+        minX, maxX, minY, maxY = envelope
+
+        # Top-left coordinate is (minX, maxY)
+        work_region_x1 = minX
+        work_region_y1 = maxY
+
+        # Bottom-right coordinate is (maxX, minY)
+        work_region_x2 = maxX
+        work_region_y2 = minY
 
     print('work_region_x1', work_region_x1)
     print('work_region_y1', work_region_y1)
@@ -187,7 +192,7 @@ def main(output_path, weights_file, work_region_shp, path_to_raster):
     work_region_w = work_region_x2 - work_region_x1
     work_region_h = work_region_y2 - work_region_y1
     print('work_region_w', work_region_w)
-    print('work_region_w', work_region_w)
+    print('work_region_h', work_region_h)
     mask_w = int(work_region_w / pixelSizeX)
     mask_h = int(work_region_h / pixelSizeY)
     print('mask_w', mask_w)
