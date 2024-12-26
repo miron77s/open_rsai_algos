@@ -1,4 +1,4 @@
-import mrcnn.config
+from mrcnn import Config
 
 GREEN_CLASS_NAMES = ['BG', 'green']
 
