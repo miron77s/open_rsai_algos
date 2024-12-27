@@ -2,6 +2,30 @@ from mrcnn.config import Config
 
 GREEN_CLASS_NAMES = ['BG', 'green']
 
+class GreeneryTrainConfig(Config):
+    NAME = "green"
+
+    IMAGES_PER_GPU = 4
+
+    GPU_COUNT = 1
+
+    NUM_CLASSES = len(CLASS_NAMES)
+
+    STEPS_PER_EPOCH = 250
+    VALIDATION_STEPS = 25
+
+    LEARNING_RATE = 0.001
+
+    BACKBONE = "resnet101"
+
+    IMAGE_MIN_DIM = 1024
+    IMAGE_MAX_DIM = 1024
+
+    RPN_NMS_THRESHOLD = 0.7
+    RPN_ANCHOR_SCALES = (32, 64, 128, 256, 512)
+    DETECTION_MIN_CONFIDENCE = 0.7
+    DETECTION_NMS_THRESHOLD = 0.3
+
 class GreeneryDetectConfig(Config):
     NAME = "green"
     IMAGES_PER_GPU = 1
