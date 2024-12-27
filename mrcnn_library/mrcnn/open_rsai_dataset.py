@@ -18,7 +18,7 @@ import time
 
 from scipy import ndimage
 
-import model as modellib, utils
+from mrcnn import model as modellib, utils
 
 DEFAULT_DATASET_YEAR = "2014"
 
