@@ -11,7 +11,7 @@ logging.getLogger().setLevel(logging.ERROR)
 from mrcnn.config import Config
 from mrcnn import model as modellib, utils
 
-from mrcnn.open_rsai_dataset import CocoDataset
+from mrcnn.open_rsai_dataset import CocoDataset, DEFAULT_DATASET_YEAR
 
 ############################################################
 #  Configurations
