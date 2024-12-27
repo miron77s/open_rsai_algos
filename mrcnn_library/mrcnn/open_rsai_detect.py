@@ -114,7 +114,7 @@ def coverage (output_path, weights_file, work_region_shp, path_to_raster, config
 
     model = mrcnn.model.MaskRCNN(
         mode="inference",
-        config=config(),
+        config=config,
         model_dir=os.getcwd()
     )
 
