@@ -9,7 +9,7 @@ class GreeneryTrainConfig(Config):
 
     GPU_COUNT = 1
 
-    NUM_CLASSES = len(CLASS_NAMES)
+    NUM_CLASSES = len(GREEN_CLASS_NAMES)
 
     STEPS_PER_EPOCH = 250
     VALIDATION_STEPS = 25
