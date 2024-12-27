@@ -2,7 +2,7 @@ from mrcnn.config import Config
 
 GREEN_CLASS_NAMES = ['BG', 'green']
 
-class GreeneryConfig(Config):
+class GreeneryDetectConfig(Config):
     NAME = "green"
     IMAGES_PER_GPU = 1
     GPU_COUNT = 1
@@ -24,7 +24,7 @@ class GreeneryConfig(Config):
 
 HYDRO_CLASS_NAMES = ['BG', 'hydro']
 
-class HydroConfig(Config):
+class HydroDetectConfig(Config):
     NAME = "hydro"
 
     IMAGES_PER_GPU = 1
