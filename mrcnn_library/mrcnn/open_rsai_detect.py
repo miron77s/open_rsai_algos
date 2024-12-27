@@ -8,7 +8,6 @@ import mrcnn.config
 import mrcnn.model
 import mrcnn.visualize
 
-from mrcnn.open_rsai_config import GreeneryDetectConfig
 from mrcnn import model as modellib, utils
 
 import numpy as np
@@ -46,7 +45,7 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total:
         print()
 
-def coverage (output_path, weights_file, work_region_shp, path_to_raster, tile_sizes):
+def coverage (output_path, weights_file, work_region_shp, path_to_raster, config, tile_sizes):
     ds = gdal.Open(path_to_raster)
     print(ds.GetGeoTransform())
     print(ds.GetProjection())
@@ -115,7 +114,7 @@ def coverage (output_path, weights_file, work_region_shp, path_to_raster, tile_s
 
     model = mrcnn.model.MaskRCNN(
         mode="inference",
-        config=GreeneryDetectConfig(),
+        config=config(),
         model_dir=os.getcwd()
     )
 
@@ -283,5 +282,5 @@ def coverage (output_path, weights_file, work_region_shp, path_to_raster, tile_s
     # Save and close DataSource
     data_source = None
 
-def greenery (output_path, weights_file, work_region_shp, path_to_raster):
-    coverage (output_path, weights_file, work_region_shp, path_to_raster, green_tile_sizes)
+def greenery (output_path, weights_file, work_region_shp, path_to_raster, config):
+    coverage (output_path, weights_file, work_region_shp, path_to_raster, config, green_tile_sizes)
