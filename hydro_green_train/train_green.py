@@ -104,4 +104,4 @@ if __name__ == '__main__':
     # augmentation = imgaug.augmenters.Fliplr(0.5)
 
     # *** This training schedule is an example. Update to your needs ***
-    def mrcnn.open_rsai_train.fine_tuned ( model, dataset_train, dataset_val, config )
+    mrcnn.open_rsai_train.fine_tuned ( model, dataset_train, dataset_val, config )

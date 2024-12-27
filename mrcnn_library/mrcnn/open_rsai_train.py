@@ -1,4 +1,4 @@
-def fine_tuned ( model, dataset_train, dataset_val, config )
+def fine_tuned ( model, dataset_train, dataset_val, config ):
     # Training - Stage 1
     print("Training network heads")
     model.train(dataset_train, dataset_val,
