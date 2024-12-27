@@ -21,8 +21,8 @@ from scipy import ndimage
 import logging
 logging.getLogger().setLevel(logging.ERROR)
 
-green_tile_sizes = [1024, 2048, 4096]
-hydro_tile_sizes = [1024, 2048]
+green_tile_sizes = [2048, 3072, 4096]
+hydro_tile_sizes = [2048, 3072]
 
 # Print iterations progress
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
