@@ -48,6 +48,30 @@ class GreeneryDetectConfig(Config):
 
 HYDRO_CLASS_NAMES = ['BG', 'hydro']
 
+class HydroTrainConfig(Config):
+    NAME = "hydro"
+
+    IMAGES_PER_GPU = 4
+
+    GPU_COUNT = 1
+
+    NUM_CLASSES = len(HYDRO_CLASS_NAMES)
+
+    STEPS_PER_EPOCH = 200
+    VALIDATION_STEPS = 20
+
+    LEARNING_RATE = 0.001
+
+    BACKBONE = "resnet101"
+
+    IMAGE_MIN_DIM = 1024
+    IMAGE_MAX_DIM = 1024
+
+    RPN_NMS_THRESHOLD = 0.7
+    RPN_ANCHOR_SCALES = (32, 64, 128, 256, 512)
+    DETECTION_MIN_CONFIDENCE = 0.7
+    DETECTION_NMS_THRESHOLD = 0.3
+
 class HydroDetectConfig(Config):
     NAME = "hydro"
 
@@ -55,7 +79,6 @@ class HydroDetectConfig(Config):
 
     GPU_COUNT = 1
 
-    # Number of classes (including background)
     NUM_CLASSES = len(HYDRO_CLASS_NAMES)
 
     STEPS_PER_EPOCH = 200
