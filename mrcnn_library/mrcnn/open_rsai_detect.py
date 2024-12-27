@@ -22,6 +22,7 @@ import logging
 logging.getLogger().setLevel(logging.ERROR)
 
 green_tile_sizes = [1024, 2048, 4096]
+hydro_tile_sizes = [1024, 2048]
 
 # Print iterations progress
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
@@ -78,19 +79,19 @@ def coverage (output_path, weights_file, work_region_shp, path_to_raster, config
     driver = ogr.GetDriverByName("ESRI Shapefile")
     # Open the data source in update mode if it exists, otherwise create a new data source
 
-    if os.path.exists(os.path.join(output_path, "green.shp")):
+    if os.path.exists(os.path.join(output_path, f"{config.NAME}.shp")):
         data_source = driver.Open(output_path, 1) # 1 is for update mode
         # Assuming data_source is already open in update mode
         layer_count = data_source.GetLayerCount()
-        green_index = -1
+        index = -1
         for i in range(layer_count):
             layer = data_source.GetLayerByIndex(i)
-            if layer.GetName() == "green":
-                green_index = i
+            if layer.GetName() == config.NAME:
+                index = i
                 break
 
-        if green_index != -1:
-            data_source.DeleteLayer(green_index)
+        if index != -1:
+            data_source.DeleteLayer(index)
     else:
         # Create a new data source since it doesn't exist
         data_source = driver.CreateDataSource(output_path)
@@ -99,7 +100,7 @@ def coverage (output_path, weights_file, work_region_shp, path_to_raster, config
     srs =  osr.SpatialReference()
     srs.ImportFromEPSG(3395)
     # create one layer
-    layer = data_source.CreateLayer("green", srs, ogr.wkbPolygon)
+    layer = data_source.CreateLayer(config.NAME, srs, ogr.wkbPolygon)
     # Add an ID field
     idField = ogr.FieldDefn("id", ogr.OFTInteger)
     layer.CreateField(idField)
@@ -284,3 +285,6 @@ def coverage (output_path, weights_file, work_region_shp, path_to_raster, config
 
 def greenery (output_path, weights_file, work_region_shp, path_to_raster, config):
     coverage (output_path, weights_file, work_region_shp, path_to_raster, config, green_tile_sizes)
+
+def hydro (output_path, weights_file, work_region_shp, path_to_raster, config):
+    coverage (output_path, weights_file, work_region_shp, path_to_raster, config, hydro_tile_sizes)
