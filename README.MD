@@ -63,7 +63,7 @@ conda activate open_rsai_detectors
 
 ```
 pip install tensorflow==2.5.0 --ignore-installed
-conda install -c conda-forge cudatoolkit=11.0
+conda install -c conda-forge cudatoolkit=11.8 cudnn
 ```
 
 The `--ignore-installed` flag ensures that the specified version of TensorFlow is installed even if an existing version is present.
