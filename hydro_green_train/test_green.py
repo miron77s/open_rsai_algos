@@ -1053,6 +1053,7 @@ if __name__ == "__main__":
 
     if len(argv) != 5 and len(argv) != 6:
         raise Exception("\nUsage:\n" + f"\t{argv[0]} [dataset-dir] [weights-dir] [start-weight-num] [end-weight-num] [save-result]")
-    if len(argv) != 5 :
+    if len(argv) == 5 :
         main(argv[1], argv[2], argv[3], argv[4])
-    main(argv[1], argv[2], argv[3], argv[4], argv[5])
+    else:
+        main(argv[1], argv[2], argv[3], argv[4], argv[5])
