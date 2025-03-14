@@ -1046,7 +1046,7 @@ test_img_list = [
 def main(dataset_dir, weights_dir, start_weight_num, end_weight_num, save_result='not_save'):
     epoch_list = range(int(start_weight_num), int(end_weight_num) + 1)
     run(CocoConfigImg1(), dataset_dir, weights_dir, test_img_list, epoch_list, save_result) 
-    run_new(CocoConfigImg4(), dataset_dir, weights_dir, test_img_list, epoch_list, save_result)
+    #run_new(CocoConfigImg4(), dataset_dir, weights_dir, test_img_list, epoch_list, save_result)
 
 if __name__ == "__main__":
     from sys import argv
