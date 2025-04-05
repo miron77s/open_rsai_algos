@@ -59,7 +59,7 @@ conda activate open_rsai_detectors
 
 ### Installing CUDA and TensorFlow and other dependencies
 
-1. Within the active environment, install CUDA 11.0 and TensorFlow 2.5.0:
+1. Within the active environment, install CUDA, CUDNN and TensorFlow:
 
 ```
 pip install tensorflow==2.5.0 --ignore-installed
