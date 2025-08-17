@@ -30,6 +30,6 @@ endfunction()
 # Example usage of the function to download multiple files
 set(DOWNLOAD_DIR "${CMAKE_BINARY_DIR}/downloaded_files")
 
-download_file("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/3DAqcSkNNrkXeQ" "mask_rcnn_green.h5" ${DOWNLOAD_DIR})
-download_file("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/8_V0Z31zmLoiNA" "mask_rcnn_hydro.h5" ${DOWNLOAD_DIR})
-download_file("https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/NQcQ4NlAZT5ykw" "mask_rcnn_coco.h5" ${DOWNLOAD_DIR})
+download_file("http://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/3DAqcSkNNrkXeQ" "mask_rcnn_green.h5" ${DOWNLOAD_DIR})
+download_file("http://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/8_V0Z31zmLoiNA" "mask_rcnn_hydro.h5" ${DOWNLOAD_DIR})
+download_file("http://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/NQcQ4NlAZT5ykw" "mask_rcnn_coco.h5" ${DOWNLOAD_DIR})
